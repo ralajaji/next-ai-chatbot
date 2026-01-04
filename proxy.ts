@@ -1,6 +1,6 @@
 import { withAuth } from "next-auth/middleware"
 
-export function middleware(request: any) {
+export function proxy(request: any) {
   return withAuth(request)
 }
 
