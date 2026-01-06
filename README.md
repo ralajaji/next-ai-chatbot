@@ -6,6 +6,12 @@ A Next.js AI chatbot with Google OAuth authentication, streaming responses, and 
 
 **[View Live Application](https://next-ai-chatbot-nu.vercel.app)**
 
+## 📸 Screenshots
+
+![Screenshot 1](https://github.com/user-attachments/assets/be8d4fa1-3ee1-4cd9-9fd0-50d2334d0f9d)
+![Screenshot 2](https://github.com/user-attachments/assets/05fac2f4-0e78-4639-ad8b-a9bdf4ec393d)
+
+
 ## ✨ Features
 
 - **Google OAuth Authentication**: Secure single sign-on with protected routes
