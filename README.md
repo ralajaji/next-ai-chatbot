@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Chat System with Web Search
 
-## Getting Started
+A Next.js AI chatbot with Google OAuth authentication, streaming responses, and integrated web search powered by OpenAI.
 
-First, run the development server:
+## 🚀 Live Demo
+
+**[View Live Application](https://next-ai-chatbot-nu.vercel.app)**
+
+## ✨ Features
+
+- **Google OAuth Authentication**: Secure single sign-on with protected routes
+- **AI Streaming Responses**: Real-time streaming chat powered by OpenAI (RayyanGPT)
+- **Web Search Mode**: Toggle between regular chat and web search with GPT-5 models
+- **Responsive Design**: Clean, modern UI that works on desktop and mobile
+- **Image Rendering**: Inline display of images from web search results
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 16, React 19, TypeScript
+- **Authentication**: NextAuth.js with Google OAuth
+- **AI Integration**: OpenAI API with AI SDK (@ai-sdk/openai, @ai-sdk/react)
+- **Search**: OpenAI Web Search Preview tool
+- **Styling**: Tailwind CSS 4
+- **Deployment**: Vercel
+
+## 📋 Prerequisites
+
+- Node.js 18+ installed
+- Google Cloud Console account (for OAuth credentials)
+- OpenAI API key
+
+## 🔧 Setup Instructions
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/ralajaji/next-ai-chatbot
+cd next-ai-chatbot
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure environment variables
+
+Create a `.env.local` file in the root directory:
+
+```env
+# Google OAuth
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# NextAuth
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_nextauth_secret
+
+# OpenAI
+OPENAI_API_KEY=your_openai_api_key
+```
+
+### 4. Get API Keys
+
+#### Google OAuth
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+6. Copy Client ID and Client Secret
+
+#### OpenAI API
+
+1. Sign up at [OpenAI Platform](https://platform.openai.com/)
+2. Navigate to API Keys section
+3. Create new secret key
+
+### 5. Run the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📖 Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Sign In**: Redirects automatically to Google sign-in
+2. **Chat Mode**: Default mode - ask questions and receive AI responses from RayyanGPT
+3. **Web Search Mode**: Toggle the search switch to enable web search with GPT-5 models and image results
+4. **Sign Out**: Click the sign-out button in the header
 
-## Learn More
+## 🏗️ Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+├── app/
+│   ├── api/
+│   │   ├── auth/          # NextAuth configuration
+│   │   ├── chat/          # AI chat endpoint with web search & regular chat
+│   ├── chat/              # Main chat interface
+│   ├── components/        # React components
+│   ├── lib/               # Utility functions
+│   ├── login/             # Login page
+│   └── page.tsx           # Landing page
+├── public/                # Static assets
+└── .env.local             # Environment variables
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔒 Security
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- All API keys are stored as environment variables
+- Routes are protected with NextAuth
 
-## Deploy on Vercel
+## 📝 Environment Variables Reference
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+|Variable              |Description               |
+|----------------------|--------------------------|
+|`GOOGLE_CLIENT_ID`    |Google OAuth client ID    |
+|`GOOGLE_CLIENT_SECRET`|Google OAuth client secret|
+|`NEXTAUTH_URL`        |Application URL           |
+|`NEXTAUTH_SECRET`     |Random secret for NextAuth|
+|`OPENAI_API_KEY`      |OpenAI API key            |
