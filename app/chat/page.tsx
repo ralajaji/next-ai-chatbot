@@ -36,13 +36,13 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-950 text-gray-100">
-      <main className="flex-1 flex flex-col h-full w-full">
+    <div className="flex h-screen max-h-screen overflow-hidden bg-slate-950 text-gray-100">
+      <main className="flex-1 flex flex-col h-full max-h-screen w-full overflow-hidden">
         <ChatHeader session={session} onNewChat={handleNewChat} />
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-4 pb-32">
+        <div className="flex-1 overflow-y-auto overscroll-none">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-40 sm:pb-32">
             {messages.length === 0 ? (
               <EmptyState />
             ) : (
@@ -55,14 +55,14 @@ export default function ChatPage() {
                     }`}
                   >
                     {msg.role === "user" ? (
-                      <div className="bg-slate-700 text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
+                      <div className="bg-slate-700 text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-[85%] sm:max-w-[80%] break-words overflow-wrap-anywhere">
                         {msg.parts?.map((part, index) => {
                           switch (part.type) {
                             case "text":
                               return (
                                 <div
                                   key={index}
-                                  className="whitespace-pre-wrap"
+                                  className="whitespace-pre-wrap break-words"
                                 >
                                   {renderTextWithMedia(part.text || "")}
                                 </div>
@@ -77,7 +77,7 @@ export default function ChatPage() {
                         <div className="h-8 w-8 bg-emerald-500 rounded-lg flex items-center justify-center shrink-0">
                           <Star className="w-5 h-5 text-white" />
                         </div>
-                        <div className="text-gray-100 mt-1 flex-1">
+                        <div className="text-gray-100 mt-1 flex-1 min-w-0 break-words">
                           {/* Show searching indicator if web search is active but no text yet */}
                           {msg.parts?.some(
                             (part) => part.type === "tool-web_search_preview"
@@ -112,7 +112,7 @@ export default function ChatPage() {
                                 return (
                                   <div
                                     key={index}
-                                    className="whitespace-pre-wrap"
+                                    className="whitespace-pre-wrap break-words overflow-wrap-anywhere"
                                   >
                                     {renderTextWithMedia(part.text || "")}
                                   </div>
@@ -149,7 +149,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950 to-transparent pt-6 pb-6 px-4">
+        <div className="sticky bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950 to-transparent pt-6 pb-4 sm:pb-6 px-4 sm:px-6">
           <div className="max-w-3xl mx-auto">
             <form
               onSubmit={handleSubmit}
