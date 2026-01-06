@@ -1,9 +1,12 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useChat } from "@ai-sdk/react";
 import { useState, useRef, useEffect } from "react";
-import { Send, Globe, Plus, LogOut, Loader2, Star } from "lucide-react";
+import { Send, Globe, Loader2, Star } from "lucide-react";
+import ChatHeader from "../components/chat/ChatHeader";
+import EmptyState from "../components/chat/EmptyState";
+import { renderTextWithMedia } from "../lib/utils/markdown";
 
 export default function ChatPage() {
   const { data: session } = useSession();
@@ -11,10 +14,15 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendMessage, status } = useChat();
+  const { messages, sendMessage, status, setMessages } = useChat();
 
   const toggleWebSearch = () => {
     setIsWebSearchEnabled(!isWebSearchEnabled);
+  };
+
+  const handleNewChat = () => {
+    setMessages([]);
+    setInput("");
   };
 
   useEffect(() => {
@@ -23,237 +31,20 @@ export default function ChatPage() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    sendMessage(
-      { text: input },
-      { body: { webSearch: isWebSearchEnabled } }
-    );
+    sendMessage({ text: input }, { body: { webSearch: isWebSearchEnabled } });
     setInput("");
-  };
-
-  // Render text with inline images (replacing markdown links with images where applicable)
-  const renderTextWithMedia = (text: string) => {
-    // Split by markdown images ![alt](url) and links [text](url)
-    const parts = text.split(/(!\[[^\]]*\]\([^)]+\)|\[[^\]]*\]\([^)]+\))/g);
-    
-    return parts.map((part, idx) => {
-      // Check if this is a markdown image ![alt](url)
-      const imageMatch = part.match(/!\[([^\]]*)\]\(([^)]+)\)/);
-      if (imageMatch) {
-        const [, altText, url] = imageMatch;
-        const cleanUrl = url.replace(/\?utm_source=openai$/, '');
-        return (
-          <span key={idx} className="block my-3">
-            <img
-              src={cleanUrl}
-              alt={altText}
-              className="rounded-lg max-w-full max-h-80 object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          </span>
-        );
-      }
-
-      // Check if this is a markdown link [text](url)
-      const linkMatch = part.match(/\[([^\]]*)\]\(([^)]+)\)/);
-      
-      if (linkMatch) {
-        const [, linkText, url] = linkMatch;
-        const cleanUrl = url.replace(/\?utm_source=openai$/, '');
-        
-        // Render as image (hide if it fails to load)
-        return (
-          <span key={idx} className="block my-3">
-            <img
-              src={cleanUrl}
-              alt={linkText}
-              className="rounded-lg max-w-full max-h-80 object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          </span>
-        );
-      }
-      
-      // Regular text
-      return <span key={idx}>{part}</span>;
-    });
-  };
-
-  const renderMessageParts = (parts: Array<any> | undefined) => {
-    if (!parts) return null;
-    console.log(parts);
-
-    return parts.map((part, index) => {
-      switch (part.type) {
-        case "text":
-          return (
-            <div key={index} className="whitespace-pre-wrap">
-              {renderTextWithMedia(part.text)}
-            </div>
-          );
-
-        case "tool-web_search_preview":
-          const state = part.state;
-
-          switch (state) {
-            case "input-streaming":
-              return (
-                <div
-                  key={index}
-                  className="mb-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg"
-                >
-                  <div className="flex items-center gap-2 text-blue-400 text-sm">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Searching the web...</span>
-                  </div>
-                </div>
-              );
-
-            case "input-availability":
-              return (
-                <div
-                  key={index}
-                  className="mb-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg"
-                >
-                  <div className="flex items-center gap-2 text-blue-400 text-sm">
-                    <Globe className="w-4 h-4" />
-                    <span>Query: {part.query || "Preparing search..."}</span>
-                  </div>
-                </div>
-              );
-
-            case "output-available":
-              return (
-                <div
-                  key={index}
-                  className="mb-3 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg"
-                >
-                  <div className="flex items-center gap-2 text-emerald-400 text-sm mb-2">
-                    <Globe className="w-4 h-4" />
-                    <span className="font-medium">Web Search Results</span>
-                  </div>
-                  {part.results && (
-                    <div className="text-gray-300 text-sm space-y-3 mt-2">
-                      {part.results.map((result: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className="pl-2 border-l-2 border-emerald-500/30"
-                        >
-                          {result.image && (
-                            <a
-                              href={result.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block mb-2"
-                            >
-                              <img
-                                src={result.image}
-                                alt={result.title || "Search result image"}
-                                className="rounded-lg max-w-full max-h-48 object-cover hover:opacity-90 transition-opacity"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = "none";
-                                }}
-                              />
-                            </a>
-                          )}
-                          <a
-                            href={result.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-emerald-400 hover:text-emerald-300 font-medium"
-                          >
-                            {result.title}
-                          </a>
-                          {result.description && (
-                            <p className="text-gray-400 text-xs mt-1">
-                              {result.description}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-
-            case "output-error":
-              return (
-                <div
-                  key={index}
-                  className="mb-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg"
-                >
-                  <div className="flex items-center gap-2 text-red-400 text-sm">
-                    <Globe className="w-4 h-4" />
-                    <span>
-                      Search failed: {part.error || "Unable to search the web"}
-                    </span>
-                  </div>
-                </div>
-              );
-
-            default:
-              return null;
-          }
-
-        default:
-          return null;
-      }
-    });
   };
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950 text-gray-100">
       <main className="flex-1 flex flex-col h-full w-full">
-        {/* Header */}
-        <header className="h-14 flex items-center justify-between px-4 border-b border-slate-800 shrink-0">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold text-gray-200">RayyanGPT</h1>
-            <button
-              onClick={() => window.location.reload()}
-              className="p-2 hover:bg-slate-800 rounded-lg text-gray-400 hover:text-white transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="flex items-center gap-2">
-            {session?.user?.image ? (
-              <img
-                src={session.user.image}
-                alt="User"
-                className="h-8 w-8 rounded-full"
-              />
-            ) : (
-              <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-medium">
-                {session?.user?.name?.[0] || "U"}
-              </div>
-            )}
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="p-2 hover:bg-slate-800 rounded-lg text-gray-400 hover:text-white transition-colors"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </header>
+        <ChatHeader session={session} onNewChat={handleNewChat} />
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto px-4 pb-32">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center py-20">
-                <div className="h-16 w-16 bg-emerald-500 rounded-2xl flex items-center justify-center mb-6">
-                  <Star className="w-9 h-9 text-white" />
-                </div>
-                <h2 className="text-2xl font-semibold text-gray-200 mb-2">
-                  How can I help you today?
-                </h2>
-                <p className="text-gray-500">
-                  Start a conversation with RayyanGPT
-                </p>
-              </div>
+              <EmptyState />
             ) : (
               <div className="divide-y divide-slate-800/50">
                 {messages.map((msg) => (
@@ -265,7 +56,21 @@ export default function ChatPage() {
                   >
                     {msg.role === "user" ? (
                       <div className="bg-slate-700 text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
-                        {renderMessageParts(msg.parts)}
+                        {msg.parts?.map((part, index) => {
+                          switch (part.type) {
+                            case "text":
+                              return (
+                                <div
+                                  key={index}
+                                  className="whitespace-pre-wrap"
+                                >
+                                  {renderTextWithMedia(part.text || "")}
+                                </div>
+                              );
+                            default:
+                              return null;
+                          }
+                        })}
                       </div>
                     ) : (
                       <>
@@ -273,7 +78,49 @@ export default function ChatPage() {
                           <Star className="w-5 h-5 text-white" />
                         </div>
                         <div className="text-gray-100 mt-1 flex-1">
-                          {renderMessageParts(msg.parts)}
+                          {/* Show searching indicator if web search is active but no text yet */}
+                          {msg.parts?.some(
+                            (part) => part.type === "tool-web_search_preview"
+                          ) &&
+                            !msg.parts?.some(
+                              (part) =>
+                                part.type === "text" &&
+                                part.text &&
+                                part.text.trim().length > 0
+                            ) && (
+                              <div className="mb-2 text-gray-500 text-sm">
+                                Searching the web...
+                              </div>
+                            )}
+                          {/* Show searched indicator if web search completed and has text */}
+                          {msg.parts?.some(
+                            (part) => part.type === "tool-web_search_preview"
+                          ) &&
+                            msg.parts?.some(
+                              (part) =>
+                                part.type === "text" &&
+                                part.text &&
+                                part.text.trim().length > 0
+                            ) && (
+                              <div className="mb-2 text-gray-500 text-sm">
+                                Searched the web
+                              </div>
+                            )}
+                          {msg.parts?.map((part, index) => {
+                            switch (part.type) {
+                              case "text":
+                                return (
+                                  <div
+                                    key={index}
+                                    className="whitespace-pre-wrap"
+                                  >
+                                    {renderTextWithMedia(part.text || "")}
+                                  </div>
+                                );
+                              default:
+                                return null;
+                            }
+                          })}
                         </div>
                       </>
                     )}
@@ -292,7 +139,6 @@ export default function ChatPage() {
                           style={{ animationDelay: `${d}ms` }}
                         />
                       ))}
-                      {/* <Loader2 className="w-5 h-5 text-gray-400 animate-spin" /> */}
                     </div>
                   </div>
                 )}
@@ -301,10 +147,6 @@ export default function ChatPage() {
             <div ref={messagesEndRef} />
           </div>
         </div>
-
-        <br />
-
-        {status === "submitted" && <Loader2 />}
 
         {/* Input */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950 to-transparent pt-6 pb-6 px-4">
