@@ -30,12 +30,11 @@ export default function LoginPage({
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-center">Welcome back</h1>
           <p className="text-slate-400 text-center mt-2 text-base font-normal">
-            Sign in to continue to AI Chat
+            Sign in to continue to RayyanGPT Chat
           </p>
         </div>
 
         {/* Login Form Card */}
-        <div className="bg-slate-900 rounded-2xl shadow-xl border border-slate-800 p-8">
           <button
             onClick={() => signIn('google', { callbackUrl })}
             className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-medium h-12 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-slate-900 group"
@@ -48,20 +47,6 @@ export default function LoginPage({
             </svg>
             <span>Sign in with Google</span>
           </button>
-        </div>
-
-        {/* Footer Links */}
-        <div className="mt-8 flex justify-center gap-6 text-slate-400">
-          <a className="hover:text-slate-300 transition-colors text-xs font-medium" href="#">
-            Terms
-          </a>
-          <a className="hover:text-slate-300 transition-colors text-xs font-medium" href="#">
-            Privacy
-          </a>
-          <a className="hover:text-slate-300 transition-colors text-xs font-medium" href="#">
-            Help
-          </a>
-        </div>
       </div>
     </div>
   )
