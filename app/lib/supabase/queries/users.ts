@@ -15,7 +15,7 @@ export async function syncUserToSupabase(user: {
           image: user.image,
           updated_at: new Date().toISOString(),
         },
-        { onConflict: 'email' } // Specify the unique column
+        { onConflict: 'email' }
       );
 
     if (error) {

@@ -26,8 +26,13 @@ export default function ChatHeader({ session, onNewChat }: ChatHeaderProps) {
         {session?.user?.image ? (
           <img
             src={session.user.image}
-            alt="User"
-            className="h-8 w-8 rounded-full"
+            alt={session.user.name || "User"}
+            className="rounded-full w-8 h-8 object-cover"
+            crossOrigin="anonymous"
+            // onError={(e) => {
+            //   console.error("Image failed to load:", session.user.image);
+            //   (e.target as HTMLImageElement).style.display = "none";
+            // }}
           />
         ) : (
           <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-medium">

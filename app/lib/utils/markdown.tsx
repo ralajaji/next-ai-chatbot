@@ -1,14 +1,7 @@
-import React from "react";
-
-/**
- * Renders text with inline images, converting markdown image/link syntax to actual img elements
- */
 export const renderTextWithMedia = (text: string) => {
-  // Split by markdown images ![alt](url) and links [text](url)
   const parts = text.split(/(!\[[^\]]*\]\([^)]+\)|\[[^\]]*\]\([^)]+\))/g);
 
   return parts.map((part, idx) => {
-    // Check if this is a markdown image ![alt](url)
     const imageMatch = part.match(/!\[([^\]]*)\]\(([^)]+)\)/);
     if (imageMatch) {
       const [, altText, url] = imageMatch;
@@ -27,13 +20,11 @@ export const renderTextWithMedia = (text: string) => {
       );
     }
 
-    // Check if this is a markdown link [text](url)
     const linkMatch = part.match(/\[([^\]]*)\]\(([^)]+)\)/);
     if (linkMatch) {
       const [, linkText, url] = linkMatch;
       const cleanUrl = url.replace(/\?utm_source=openai$/, "");
 
-      // Render as image (hide if it fails to load)
       return (
         <span key={idx} className="block my-3">
           <img
@@ -48,7 +39,6 @@ export const renderTextWithMedia = (text: string) => {
       );
     }
 
-    // Regular text
     return <span key={idx}>{part}</span>;
   });
 };
