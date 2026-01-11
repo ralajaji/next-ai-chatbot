@@ -26,26 +26,30 @@ export default function ChatPage({ searchParams }: ChatPageProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLoadingChat, setIsLoadingChat] = useState(!!chatId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const sessionChatIdsRef = useRef<Set<string>>(new Set());
 
   const { messages, sendMessage, status, setMessages } = useChat({});
 
-  // Load existing chat messages when chatId is present
   useEffect(() => {
-    if(!chatId) {
+    if (!chatId) {
       setIsLoadingChat(false);
       return;
     }
+
+    if (sessionChatIdsRef.current.has(chatId)) {
+      setIsLoadingChat(false);
+      return;
+    }
+    
     const loadChatMessages = async () => {
       setIsLoadingChat(true);
       try {
         const dbMessages = await getChatMessagesClient(chatId);
         if (!dbMessages || dbMessages.length === 0) {
-          // Chat doesn't exist or is empty, remove chatId from URL
           router.replace("/chat", { scroll: false });
           return;
         }
-        
-        // Convert DB messages to useChat format
+
         const formattedMessages = dbMessages.map((msg: { id: string; role: string; content: string; created_at: string }) => ({
           id: msg.id,
           role: msg.role as "user" | "assistant",
@@ -82,12 +86,12 @@ export default function ChatPage({ searchParams }: ChatPageProps) {
 
     let activeChatId = chatId;
 
-    // Create chat if it doesn't exist
     if (!activeChatId) {
       try {
         const chatTitle = input.slice(0, 50);
         const newChat = await createChatClient(session.user.email, chatTitle);
-        activeChatId = newChat.id;
+        activeChatId = newChat.id as string;
+        sessionChatIdsRef.current.add(activeChatId);
         router.replace(`/chat?chatId=${activeChatId}`, { scroll: false });
       } catch (error) {
         console.error("Error creating chat:", error);
