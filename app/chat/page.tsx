@@ -2,19 +2,69 @@
 
 import { useSession } from "next-auth/react";
 import { useChat } from "@ai-sdk/react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import { Send, Globe, Loader2, Star } from "lucide-react";
 import ChatHeader from "../components/chat/ChatHeader";
+import ChatSidebar from "../components/chat/ChatSidebar";
+import ChatSkeleton from "../components/chat/ChatSkeleton";
 import EmptyState from "../components/chat/EmptyState";
 import { renderTextWithMedia } from "../lib/utils/markdown";
+import { createChatClient, getChatMessagesClient } from "../lib/supabase/queries/chat.client";
 
-export default function ChatPage() {
+interface ChatPageProps {
+  searchParams: Promise<{ chatId?: string }>;
+}
+
+export default function ChatPage({ searchParams }: ChatPageProps) {
   const { data: session } = useSession();
+  const router = useRouter();
+  const { chatId } = use(searchParams);
+  
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(false);
   const [input, setInput] = useState("");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isLoadingChat, setIsLoadingChat] = useState(!!chatId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendMessage, status, setMessages } = useChat();
+  const { messages, sendMessage, status, setMessages } = useChat({});
+
+  // Load existing chat messages when chatId is present
+  useEffect(() => {
+    if(!chatId) {
+      setIsLoadingChat(false);
+      return;
+    }
+    const loadChatMessages = async () => {
+      setIsLoadingChat(true);
+      try {
+        const dbMessages = await getChatMessagesClient(chatId);
+        if (!dbMessages || dbMessages.length === 0) {
+          // Chat doesn't exist or is empty, remove chatId from URL
+          router.replace("/chat", { scroll: false });
+          return;
+        }
+        
+        // Convert DB messages to useChat format
+        const formattedMessages = dbMessages.map((msg: { id: string; role: string; content: string; created_at: string }) => ({
+          id: msg.id,
+          role: msg.role as "user" | "assistant",
+          content: msg.content,
+          parts: [{ type: "text" as const, text: msg.content }],
+          createdAt: new Date(msg.created_at),
+        }));
+        
+        setMessages(formattedMessages);
+      } catch (error) {
+        console.error("Error loading chat:", error);
+        router.replace("/chat", { scroll: false });
+      } finally {
+        setIsLoadingChat(false);
+      }
+    };
+
+    loadChatMessages();
+  }, [chatId]);
 
   const toggleWebSearch = () => {
     setIsWebSearchEnabled(!isWebSearchEnabled);
@@ -23,27 +73,61 @@ export default function ChatPage() {
   const handleNewChat = () => {
     setMessages([]);
     setInput("");
+    router.push("/chat");
   };
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, status]);
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    sendMessage({ text: input }, { body: { webSearch: isWebSearchEnabled } });
+    if (!input.trim() || !session?.user?.email) return;
+
+    let activeChatId = chatId;
+
+    // Create chat if it doesn't exist
+    if (!activeChatId) {
+      try {
+        const chatTitle = input.slice(0, 50);
+        const newChat = await createChatClient(session.user.email, chatTitle);
+        activeChatId = newChat.id;
+        router.replace(`/chat?chatId=${activeChatId}`, { scroll: false });
+      } catch (error) {
+        console.error("Error creating chat:", error);
+        return;
+      }
+    }
+
+    sendMessage(
+      { text: input },
+      {
+        body: {
+          webSearch: isWebSearchEnabled,
+          chatId: activeChatId,
+          userId: session.user.email,
+        },
+      }
+    );
     setInput("");
   };
 
   return (
     <div className="flex h-screen max-h-screen overflow-hidden bg-slate-950 text-gray-100">
+      <ChatSidebar
+        userId={session?.user?.id}
+        onNewChat={handleNewChat}
+        isMobileOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+      />
       <main className="flex-1 flex flex-col h-full max-h-screen w-full overflow-hidden">
-        <ChatHeader session={session} onNewChat={handleNewChat} />
+        <ChatHeader
+          session={session}
+          onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+        />
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto overscroll-none">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-40 sm:pb-32">
-            {messages.length === 0 ? (
+            {isLoadingChat ? (
+              <ChatSkeleton />
+            ) : messages.length === 0 ? (
               <EmptyState />
             ) : (
               <div className="divide-y divide-slate-800/50">

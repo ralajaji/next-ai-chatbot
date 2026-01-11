@@ -1,26 +1,28 @@
 "use client";
 
 import { signOut } from "next-auth/react";
-import { Plus, LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { Session } from "next-auth";
 
 interface ChatHeaderProps {
   session: Session | null;
-  onNewChat: () => void;
+  onToggleSidebar?: () => void;
 }
 
-export default function ChatHeader({ session, onNewChat }: ChatHeaderProps) {
+export default function ChatHeader({ session, onToggleSidebar }: ChatHeaderProps) {
   return (
     <header className="h-14 flex items-center justify-between px-4 border-b border-slate-800 shrink-0">
       <div className="flex items-center gap-3">
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            className="md:hidden p-2 hover:bg-slate-800 rounded-lg text-gray-400 hover:text-white transition-colors"
+            aria-label="Toggle sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
         <h1 className="text-lg font-semibold text-gray-200">RayyanGPT</h1>
-        <button
-          onClick={onNewChat}
-          className="p-2 hover:bg-slate-800 rounded-lg text-gray-400 hover:text-white transition-colors"
-          aria-label="New chat"
-        >
-          <Plus className="w-5 h-5" />
-        </button>
       </div>
       <div className="flex items-center gap-2">
         {session?.user?.image ? (

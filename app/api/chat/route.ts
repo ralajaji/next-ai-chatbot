@@ -1,15 +1,36 @@
-import {
-  UIMessage,
-  streamText,
-  convertToModelMessages,
-  stepCountIs,
-} from "ai";
+import { UIMessage, streamText, convertToModelMessages, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
+import {
+  saveMessage,
+  updateChatTimestamp,
+} from "@/app/lib/supabase/queries/chat";
 
 export async function POST(req: Request) {
   try {
-    const { messages, webSearch }: { messages: UIMessage[]; webSearch?: boolean } =
-      await req.json();
+    const {
+      messages,
+      webSearch,
+      chatId,
+      userId,
+    }: {
+      messages: (UIMessage & { parts: { text: string } })[];
+      webSearch?: boolean;
+      chatId?: string;
+      userId?: string;
+    } = await req.json();
+
+    // Save user message to database
+    if (chatId && userId) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.role === "user") {
+        // Get text from parts array - find the text part
+        const textPart = lastMessage.parts?.find((p: { type: string }) => p.type === "text") as { type: string; text: string } | undefined;
+        const content = textPart?.text || "";
+        if (content) {
+          await saveMessage(chatId, "user", content);
+        }
+      }
+    }
 
     const tools = webSearch
       ? { web_search_preview: openai.tools.webSearchPreview({}) }
@@ -25,6 +46,13 @@ export async function POST(req: Request) {
       messages: await convertToModelMessages(messages),
       tools,
       ...(webSearch && { stopWhen: stepCountIs(2) }),
+      onFinish: async ({ text }) => {
+        // Save assistant response to database
+        if (chatId && userId) {
+          await saveMessage(chatId, "assistant", text);
+          await updateChatTimestamp(chatId);
+        }
+      },
     });
 
     return result.toUIMessageStreamResponse();

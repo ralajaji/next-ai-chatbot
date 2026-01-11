@@ -1,4 +1,4 @@
-import { supabaseServer } from '../server';
+import { supabase } from '../supabase';
 
 export async function syncUserToSupabase(user: {
   email: string;
@@ -6,7 +6,7 @@ export async function syncUserToSupabase(user: {
   image?: string | null;
 }) {
   try {
-    const { error } = await supabaseServer
+    const { error } = await supabase
       .from('users')
       .upsert(
         {
